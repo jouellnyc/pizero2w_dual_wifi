@@ -154,7 +154,7 @@ On the Pi Zero 2W, both interfaces use simple `wlan0`/`wlan1` names because Pi O
 
 On a standard Ubuntu desktop, the USB adapter would get a MAC-based name instead:
 ```
-wlx6c60ebce2827   ←  "wl" + "x" (USB) + MAC address with colons removed
+wlx6c60ebce2827    "wl" + "x" (USB) + MAC address with colons removed
 ```
 
 If you want simple names on Ubuntu too, add to `/boot/cmdline.txt`:
