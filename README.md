@@ -15,8 +15,8 @@ Automatic WiFi failover on a Raspberry Pi Zero 2W using two interfaces: onboard 
 Both `wlan0` and `wlan1` connect to the same access point independently. The kernel maintains two default routes with different metrics:
 
 ```
-default via 192.168.0.1 dev wlan0 metric 600   ← primary
-default via 192.168.0.1 dev wlan1 metric 601   ← failover
+default via 192.168.0.1 dev wlan0 metric 600    primary
+default via 192.168.0.1 dev wlan1 metric 601    failover
 ```
 
 When `wlan0` goes down, the kernel automatically removes its route and traffic flows through `wlan1`. When `wlan0` comes back, it reasserts the lower-metric route and becomes primary again. No daemons, no scripts required.
