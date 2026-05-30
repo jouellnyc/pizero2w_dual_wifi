@@ -51,7 +51,38 @@ ifconfig
 # wlan1 = USB adapter (up, no IP yet)
 ```
 
-### 3. Connect wlan1 to the Network
+### 3. Install Bonding Support
+
+```bash
+sudo apt install ifenslave
+```
+
+### 4. Create the Bond (Optional — for active-backup bonding)
+
+If you want full kernel-level bonding instead of metric-based failover:
+
+```bash
+# Create the bond interface
+nmcli con add type bond con-name bond0 ifname bond0 \
+  bond.options "mode=active-backup,miimon=100"
+
+# Add wlan0 as primary slave
+nmcli con add type wifi con-name bond-wlan0 ifname wlan0 \
+  master bond0 ssid "YourSSID" \
+  -- wifi-sec.key-mgmt wpa-psk wifi-sec.psk "YourPassword"
+
+# Add wlan1 as secondary slave
+nmcli con add type wifi con-name bond-wlan1 ifname wlan1 \
+  master bond0 ssid "YourSSID" \
+  -- wifi-sec.key-mgmt wpa-psk wifi-sec.psk "YourPassword"
+
+# Bring the bond up
+nmcli con up bond0
+```
+
+> **Note:** Metric-based failover (see below) is simpler and works just as well for most use cases. Bonding adds complexity and some APs may behave unexpectedly with it.
+
+### 5. Connect wlan1 to the Network
 
 ```bash
 nmcli dev wifi connect "YourSSID" password "YourPassword" ifname wlan1
@@ -83,22 +114,58 @@ default via 192.168.0.1 dev wlan1 proto dhcp src 192.168.0.y metric 601
 
 ## Testing Failover
 
+Run a continuous ping from a remote host first:
 ```bash
-# Bring down primary interface
-sudo ip link set wlan0 down
-
-# Verify routing shifted to wlan1
-ip route show
-# Should show only wlan1 default route
-
-# Restore wlan0
-sudo ip link set wlan0 up
-
-# Verify wlan0 is primary again
-ip route show
+# From your desktop
+ping 192.168.0.x   # Pi's wlan0 IP
 ```
 
-Pings from a remote host will continue uninterrupted during the failover.
+Then on the Pi, simulate failures:
+
+```bash
+# Kill primary — traffic shifts to wlan1 instantly
+sudo ip link set wlan0 down
+ip route show
+# default via 192.168.0.1 dev wlan1 metric 601  ← wlan1 now primary
+
+# Restore wlan0 — traffic shifts back
+sudo ip link set wlan0 up
+ip route show
+# default via 192.168.0.1 dev wlan0 metric 600  ← wlan0 primary again
+# default via 192.168.0.1 dev wlan1 metric 601  ← wlan1 back to standby
+
+# Test wlan1 failure too
+sudo ip link set wlan1 down
+ip route show
+# default via 192.168.0.1 dev wlan0 metric 600  ← wlan0 unaffected
+sudo ip link set wlan1 up
+```
+
+Pings from the remote host continue uninterrupted throughout all of the above.
+
+## Interface Naming
+
+On the Pi Zero 2W, both interfaces use simple `wlan0`/`wlan1` names because Pi OS disables predictable interface naming by default.
+
+On a standard Ubuntu desktop, the USB adapter would get a MAC-based name instead:
+```
+wlx6c60ebce2827   ←  "wl" + "x" (USB) + MAC address with colons removed
+```
+
+If you want simple names on Ubuntu too, add to `/boot/cmdline.txt`:
+```
+net.ifnames=0 biosdevname=0
+```
+
+## Viewing the Full USB Device Tree
+
+```bash
+usb-devices
+# or
+lsusb -t
+```
+
+Useful for confirming the adapter is detected and identifying its exact chipset/firmware.
 
 ## Notes
 
@@ -114,3 +181,4 @@ Pings from a remote host will continue uninterrupted during the failover.
 - **Kernel:** Linux 6.x
 - **USB adapter:** Realtek RTL8188FU (`0bda:f179`)
 - **Network manager:** NetworkManager + netplan
+
