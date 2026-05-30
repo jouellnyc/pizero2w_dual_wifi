@@ -9,6 +9,7 @@ Automatic WiFi failover on a Raspberry Pi Zero 2W using two interfaces: onboard 
   - Chipset: `0bda:f179`
   - Firmware: `rtlwifi/rtl8188fufw.bin` (included in Pi OS kernel)
   - Requires micro-USB OTG adapter to connect to Pi Zero
+  - A good 5V 2.5 A power adapter is suggested
 
 ## How It Works
 
