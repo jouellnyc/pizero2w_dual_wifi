@@ -131,18 +131,18 @@ Then on the Pi, simulate failures:
 # Kill primary — traffic shifts to wlan1 instantly
 sudo ip link set wlan0 down
 ip route show
-# default via 192.168.0.1 dev wlan1 metric 601  ← wlan1 now primary
+# default via 192.168.0.1 dev wlan1 metric 601  wlan1 now primary
 
 # Restore wlan0 — traffic shifts back
 sudo ip link set wlan0 up
 ip route show
-# default via 192.168.0.1 dev wlan0 metric 600  ← wlan0 primary again
-# default via 192.168.0.1 dev wlan1 metric 601  ← wlan1 back to standby
+# default via 192.168.0.1 dev wlan0 metric 600  wlan0 primary again
+# default via 192.168.0.1 dev wlan1 metric 601  wlan1 back to standby
 
 # Test wlan1 failure too
 sudo ip link set wlan1 down
 ip route show
-# default via 192.168.0.1 dev wlan0 metric 600  ← wlan0 unaffected
+# default via 192.168.0.1 dev wlan0 metric 600  wlan0 unaffected
 sudo ip link set wlan1 up
 ```
 
