@@ -2,7 +2,7 @@
 
 Automatic WiFi failover on a Raspberry Pi Zero 2W using two interfaces: onboard WiFi (`wlan0`) and a USB RTL8188FU adapter (`wlan1`). No bonding daemons, no extra software — just Linux kernel routing metrics.
 
-<img width="760" height="985" alt="image" src="https://github.com/user-attachments/assets/7911a609-6ead-4045-a956-db23583ff348" />
+<img width="380" height="492" alt="image" src="https://github.com/user-attachments/assets/7911a609-6ead-4045-a956-db23583ff348" />
 
 ## Hardware
 
