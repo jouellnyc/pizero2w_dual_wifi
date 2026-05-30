@@ -28,7 +28,9 @@ When `wlan0` goes down, the kernel automatically removes its route and traffic f
 
 ### 1. Flash Pi OS
 
-Flash **Raspberry Pi OS Lite (64-bit)** using Raspberry Pi Imager. In the OS Customisation screen, configure:
+Flash **Raspberry Pi OS Lite (64-bit)** using Raspberry Pi Imager (Debian GNU/Linux 13 (trixie) used here).                                                              
+
+In the OS Customisation screen, configure:
 
 - Hostname
 - Username / password
