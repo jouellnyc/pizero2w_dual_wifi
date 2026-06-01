@@ -198,6 +198,8 @@ OLED SCL  ->  Pin 5  (GPIO3/SCL)
 OLED SDA  ->  Pin 3  (GPIO2/SDA)
 ```
 
+<img width="380" height="492" alt="image" src="oled.png" />
+
 see oled_wifi.py
 
 
