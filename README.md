@@ -187,3 +187,20 @@ Useful for confirming the adapter is detected and identifying its exact chipset/
 - **USB adapter:** Realtek RTL8188FU (`0bda:f179`)
 - **Network manager:** NetworkManager + netplan
 
+## Monitor (Optional)
+Displays on a 1.3" SSD1306 OLED (via I2C):
+
+```
+SSD1306 I2C pins to Pi Zero GPIO:
+OLED VCC  ->  Pin 1  (3.3V)
+OLED GND  ->  Pin 6  (GND)
+OLED SCL  ->  Pin 5  (GPIO3/SCL)
+OLED SDA  ->  Pin 3  (GPIO2/SDA)
+```
+
+see oled_wifi.py
+
+
+
+
+
