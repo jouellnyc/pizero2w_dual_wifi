@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 
 """
@@ -49,17 +48,25 @@ W              = 128
 H              = 64
 
 # ─── GPIO pins for LEDs (BCM numbering) ──────────────────────────────────────
-GPIO_LED_GREEN  = 17
-GPIO_LED_YELLOW = 27
-GPIO_LED_RED    = 22
+GPIO_LED_GREEN  = 16
+GPIO_LED_YELLOW = 12
+GPIO_LED_RED    = 13
 # ─────────────────────────────────────────────────────────────────────────────
 
 # Shared auth state — written by auth thread, read by display thread
-auth_state = "unknown"   # "ok", "checking", "fail", "unknown"
+auth_state = "initing"   # "ok", "checking", "fail", "unknown", "initing"
 auth_lock  = threading.Lock()
 
 
 # ─── GPIO setup ──────────────────────────────────────────────────────────────
+
+def gpio_init_sequence():
+    for pin in [GPIO_LED_GREEN, GPIO_LED_YELLOW, GPIO_LED_RED]:
+        for _ in range(2):
+            GPIO.output(pin, GPIO.HIGH)
+            time.sleep(0.4)
+            GPIO.output(pin, GPIO.LOW)
+            time.sleep(0.2)
 
 def gpio_setup():
     GPIO.setmode(GPIO.BCM)
@@ -116,6 +123,14 @@ def check_auth(iface):
         return False
 
 
+def blink_yellow(stop_event):
+    while not stop_event.is_set():
+        GPIO.output(GPIO_LED_YELLOW, GPIO.HIGH)
+        time.sleep(0.3)
+        GPIO.output(GPIO_LED_YELLOW, GPIO.LOW)
+        time.sleep(0.3)
+
+
 def auth_thread_func():
     """
     Runs every AUTH_CHECK_SEC seconds.
@@ -125,7 +140,12 @@ def auth_thread_func():
     while True:
         with auth_lock:
             auth_state = "checking"
-        set_led("checking")
+
+        # Blink yellow while testing
+        stop_blink = threading.Event()
+        blink_thread = threading.Thread(target=blink_yellow, args=(stop_blink,), daemon=True)
+        blink_thread.start()
+
         print(f"[{datetime.now().strftime('%H:%M:%S')}] Checking WPA2 auth...")
 
         results = []
@@ -140,6 +160,10 @@ def auth_thread_func():
             new_state = "ok"       # at least one interface up = resilient connection ok
         else:
             new_state = "fail"
+
+        # Stop blinking yellow
+        stop_blink.set()
+        blink_thread.join()
 
         with auth_lock:
             auth_state = new_state
@@ -222,6 +246,7 @@ def auth_state_label():
         "ok":       "Auth: OK",
         "checking": "Auth: testing",
         "fail":     "Auth: FAIL",
+        "initing":  "Auth: initing..",
         "unknown":  "Auth: ?",
     }.get(state, "Auth: ?")
 
@@ -261,7 +286,7 @@ def draw_screen(device, font):
         draw.text((3, 15), f"{ssid_display}  {auth_state_label()}", font=font, fill=255)
 
         # ── Divider ──
-        draw.line([(1, 28), (W - 2, 28)], fill=255)
+        draw.line([(1, 26), (W - 2, 26)], fill=255)
 
         # ── WiFi entries ──
         y = 32
@@ -275,11 +300,29 @@ def draw_screen(device, font):
 # ─── Main ────────────────────────────────────────────────────────────────────
 
 def main():
+    global auth_state
     gpio_setup()
 
     serial = i2c(port=I2C_PORT, address=I2C_ADDRESS)
     device = sh1106(serial, rotate=0)
     font   = ImageFont.truetype(FONT_PATH, FONT_SIZE)
+
+    # Show initing on screen then run LED init sequence
+    draw_screen(device, font)
+    gpio_init_sequence()
+    # Blink all LEDs during initing period
+    end_time = time.time() + 5
+    while time.time() < end_time:
+        for pin in [GPIO_LED_GREEN, GPIO_LED_YELLOW, GPIO_LED_RED]:
+            GPIO.output(pin, GPIO.HIGH)
+        time.sleep(0.3)
+        for pin in [GPIO_LED_GREEN, GPIO_LED_YELLOW, GPIO_LED_RED]:
+            GPIO.output(pin, GPIO.LOW)
+        time.sleep(0.3)
+
+    # Show initing state before auth thread starts
+    with auth_lock:
+        auth_state = "initing"
 
     # Start auth check thread
     t = threading.Thread(target=auth_thread_func, daemon=True)
