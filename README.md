@@ -202,6 +202,8 @@ OLED SDA  ->  Pin 3  (GPIO2/SDA)
 
 <img width="580" height="492" alt="image" src="https://github.com/user-attachments/assets/75b5e5ed-935e-4f5f-b9b1-34adf8ae64d2" />
 
+Add some R, G, Y leds for stop light effect.
+
 see oled_wifi.py
 
 
